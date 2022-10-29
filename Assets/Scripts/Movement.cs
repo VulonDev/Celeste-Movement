@@ -10,6 +10,7 @@ public class Movement : MonoBehaviour
     [HideInInspector]
     public Rigidbody2D rb;
     private AnimationScript anim;
+    private Vector2 prevVelocity;
 
     [Space]
     [Header("Stats")]
@@ -65,8 +66,9 @@ public class Movement : MonoBehaviour
         {
             if(side != coll.wallSide)
                 anim.Flip(side*-1);
-            wallGrab = true;
-            wallSlide = false;
+            wallGrab = false;
+            wallSlide = true;
+            WallSlide();
         }
 
         if (Input.GetButtonUp("Fire3") || !coll.onWall || !canMove)
@@ -98,10 +100,11 @@ public class Movement : MonoBehaviour
 
         if(coll.onWall && !coll.onGround)
         {
-            if (x != 0 && !wallGrab)
+            if (x != 0 && !wallSlide)
             {
-                wallSlide = true;
-                WallSlide();
+                wallGrab = true;
+                if(side != coll.wallSide)
+                anim.Flip(side*-1);
             }
         }
 
@@ -111,7 +114,6 @@ public class Movement : MonoBehaviour
         if (Input.GetButtonDown("Jump"))
         {
             anim.SetTrigger("jump");
-
             if (coll.onGround)
                 Jump(Vector2.up, false);
             if (coll.onWall && !coll.onGround)
@@ -255,7 +257,13 @@ public class Movement : MonoBehaviour
 
         if (!wallJumped)
         {
+            prevVelocity = rb.velocity;
             rb.velocity = new Vector2(dir.x * speed, rb.velocity.y);
+
+            if(coll.onGround && (Mathf.Abs(prevVelocity.x) > Mathf.Abs(rb.velocity.x))) {
+                rb.velocity = new Vector2(dir.x * (speed/2), rb.velocity.y);
+            }
+            
         }
         else
         {
